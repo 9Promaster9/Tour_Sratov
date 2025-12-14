@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тайны Энгельса и Саратова | Интерактивный тур</title>
+    
+    <!-- Подключаем карту Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- Подключаем красивые шрифты -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- CSS СТИЛИ --- */
+        
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #E0E0E0;
+            --text-secondary: #a0a0a0;
+            --accent-color: #8b0000;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Шапка */
+        header {
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1473186578169-2148e6664853?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            padding: 80px 20px;
+            text-align: center;
+            border-bottom: 4px solid var(--accent-color);
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.5em;
+            margin: 0;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.9);
+        }
+
+        .subtitle {
+            font-size: 1.3em;
+            color: #ddd;
+            margin-top: 15px;
+            font-weight: 300;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Вступление */
+        .intro-section {
+            background-color: var(--card-bg);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            margin-bottom: 50px;
+            border-left: 6px solid var(--accent-color);
+        }
+
+        .intro-section h2, .details-section h2 {
+            font-family: 'Playfair Display', serif;
+            color: var(--accent-color);
+            margin-top: 0;
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .stat-item {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #fff;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+
+        /* Карта */
+        .map-wrapper {
+            position: relative;
+            height: 600px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            border: 1px solid #333;
+            margin-bottom: 60px;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Детальное описание */
+        .details-section {
+            margin-top: 60px;
+        }
+        
+        .places-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 30px;
+        }
+
+        .place-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #333;
+        }
+
+        .place-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(139, 0, 0, 0.2);
+            border-color: var(--accent-color);
+        }
+
+        .place-image-wrapper {
+            width: 100%;
+            height: 250px;
+            overflow: hidden;
+            background-color: #000;
+            position: relative;
+        }
+
+        .place-image-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+
+        .place-card:hover .place-image-img {
+            transform: scale(1.05);
+        }
+
+        .place-content {
+            padding: 25px;
+        }
+
+        .place-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5em;
+            color: #fff;
+            margin: 0 0 10px 0;
+        }
+
+        .place-city {
+            display: inline-block;
+            background-color: var(--accent-color);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .place-text {
+            color: #ccc;
+            font-size: 0.95em;
+            line-height: 1.7;
+        }
+
+        /* Popup Styles */
+        .leaflet-popup-content-wrapper {
+            background-color: var(--card-bg);
+            color: var(--text-main);
+            border-radius: 8px;
+            border: 1px solid var(--accent-color);
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        .leaflet-popup-tip {
+            background-color: var(--accent-color);
+        }
+
+        .custom-popup-content {
+            width: 260px;
+        }
+
+        .popup-image-wrapper {
+            width: 100%;
+            height: 140px;
+            background-color: #333;
+            overflow: hidden;
+        }
+
+        .popup-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .popup-header {
+            background-color: var(--accent-color);
+            padding: 5px 15px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.8em;
+            text-transform: uppercase;
+        }
+
+        .popup-info {
+            padding: 10px 15px 15px 15px;
+        }
+
+        .popup-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1em;
+            color: #fff;
+            margin: 0 0 5px 0;
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+
+        .popup-text {
+            font-size: 0.8em;
+            color: #bbb;
+            margin: 0;
+        }
+
+        /* Анимация плавного появления */
+        .leaflet-fade-anim .leaflet-popup {
+            transition: opacity 0.3s linear;
+        }
+
+        footer {
+            text-align: center;
+            padding: 50px;
+            margin-top: 60px;
+            color: #666;
+            font-size: 0.9em;
+            border-top: 1px solid #222;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-content">
+            <h1>Тени Прошлого</h1>
+            <div class="subtitle">Интерактивный тур по легендарным местам Энгельса и Саратова</div>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <!-- Вступление -->
+        <section class="intro-section">
+            <h2>О Проекте</h2>
+            <p>
+                Добро пожаловать в цифровое путешествие по «другой» стороне наших городов. 
+                Этот проект посвящен зданиям, которые хранят молчание десятилетий: заброшенным усадьбам, 
+                старинным заводам и домам с призраками. Мы предлагаем вам взглянуть на историю не через 
+                парадные фасады, а через призму времени и легенд.
+            </p>
+            
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-value">~3.5 часа</span>
+                    <span class="stat-label">Время на посещение всех мест</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">5</span>
+                    <span class="stat-label">Уникальных локаций</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">2 города</span>
+                    <span class="stat-label">Саратов и Энгельс</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">XIX-XX век</span>
+                    <span class="stat-label">Исторический охват</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Карта -->
+        <h2 style="text-align: center; color: #fff; font-family: 'Playfair Display', serif; margin-bottom: 20px;">Карта Маршрута</h2>
+        <div class="map-wrapper">
+            <div id="map"></div>
+        </div>
+
+        <!-- Детальное описание -->
+        <section class="details-section">
+            <h2>Детальное описание объектов</h2>
+            <div id="places-list" class="places-list">
+                <!-- Карточки будут добавлены здесь через JavaScript -->
+            </div>
+        </section>
+
+    </div>
+
+    <footer>
+        <p>Проект выполнил: Шуткин Кирилл, 10Б класс | МОУ СОШ №12 | 2025 г.</p>
+    </footer>
+
+    <script>
+        // --- ДАННЫЕ И ЛОГИКА ---
+
+        // 1. База данных мест с полным описанием и ИЗОБРАЖЕНИЯМИ
+        // imgUrl ссылается на файлы, которые должны лежать в папке с сайтом
+        const places = [
+            {
+                name: "Мельница братьев Штоль",
+                coords: [51.503, 46.125],
+                status: "Руины / Заброшено",
+                city: "Энгельс",
+                shortDesc: "Мощный памятник промархитектуры 1909 года.",
+                fullDesc: "Здание паровой мельницы братьев Штоль — один из символов промышленного Энгельса начала XX века. Построенная в 1909 году, она поражала современников мощностью и красотой кирпичной кладки. Несмотря на то, что сейчас от здания остались только стены, оно сохраняет величественный вид.",
+                imgUrl: "melnitsa_shtol.jpg" 
+            },
+            {
+                name: "Дом офицеров",
+                coords: [51.485, 46.160],
+                status: "Аварийное / После пожара",
+                city: "Энгельс",
+                shortDesc: "Легендарное место авиации, пострадавшее от огня.",
+                fullDesc: "Гарнизонный Дом офицеров в Лётном городке — место с героической историей. Здесь в 1941 году Марина Раскова формировала женские авиаполки, а позже проходили подготовку космонавты, включая Юрия Гагарина. Пожар 2022 года нанес зданию огромный ущерб, но оно остается важнейшим памятником.",
+                imgUrl: "dom_ofitserov.jpg"
+            },
+            {
+                name: "Склады Рейнеке",
+                coords: [51.5305, 46.0355],
+                status: "Заброшено / После пожара",
+                city: "Саратов",
+                shortDesc: "Мрачный кирпичный комплекс, переживший пожар.",
+                fullDesc: "Провиантские склады Рейнеке — скрытая жемчужина в центре Саратова. Комплекс зданий из красного кирпича конца XIX века служил для хранения запасов продовольствия. В 2015 году склады пережили разрушительный пожар. Сегодня их мощные стены привлекают любителей таинственных мест.",
+                imgUrl: "sklady_reineke.jpg"
+            },
+            {
+                name: "Мельница Шмидта (Малая)",
+                coords: [51.528, 46.035],
+                status: "Частично сохранилась",
+                city: "Саратов",
+                shortDesc: "Готический замок на берегу Волги.",
+                fullDesc: "Малая мельница Шмидта в Саратове выглядит как средневековый замок на берегу Волги. Построенная в неоготическом стиле, она принадлежала одной из богатейших династий региона. Городские легенды гласят, что под мельницей существуют тайные ходы.",
+                imgUrl: "melnitsa_shmidta.jpg"
+            },
+            {
+                name: "Дом с кариатидами (Яхимовича)",
+                coords: [51.535, 46.015],
+                status: "Аварийное / Расселен",
+                city: "Саратов",
+                shortDesc: "Жемчужина модерна с печальной судьбой.",
+                fullDesc: "Доходный дом инженера Яхимовича — шедевр саратовского модерна. Здание известно не только своими скульптурами, но и уникальной системой паро-бетонного отопления. Судьба дома печальна: он пережил несколько попыток реставрации и сейчас находится в аварийном состоянии.",
+                imgUrl: "dom_yakhimovicha.jpg"
+            }
+        ];
+
+        // 2. Инициализация карты
+        // attributionControl: false - УБИРАЕТ КОПИРАЙТ В ПРАВОМ НИЖНЕМ УГЛУ
+        var map = L.map('map', {
+            attributionControl: false 
+        }).setView([51.51, 46.08], 12); 
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            // attribution: '...' // Удаляем текст отсюда, так как контроль полностью отключен
+            subdomains: 'abcd',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Иконка
+        var customIcon = L.divIcon({
+            className: 'custom-marker',
+            html: '<div style="background-color: #8b0000; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 10px #8b0000; cursor: pointer;"></div>',
+            iconSize: [18, 18],
+            iconAnchor: [9, 9],
+            popupAnchor: [0, -10]
+        });
+
+        // 3. Генерация маркеров и карточек
+        const placesContainer = document.getElementById('places-list');
+
+        // URL заглушки на случай, если фото не загрузится (для превью)
+        const fallbackImage = "https://placehold.co/600x400/333/8b0000?text=Фото+не+подключено";
+
+        places.forEach(place => {
+            // А) Добавляем маркер на карту с фото в попапе
+            const popupContent = `
+                <div class="custom-popup-content">
+                    <div class="popup-image-wrapper">
+                        <img src="${place.imgUrl}" class="popup-img" alt="${place.name}" onerror="this.src='${fallbackImage}'">
+                    </div>
+                    <div class="popup-header">${place.city}</div>
+                    <div class="popup-info">
+                        <h3 class="popup-title">${place.name}</h3>
+                        <p class="popup-text">${place.shortDesc}</p>
+                    </div>
+                </div>
+            `;
+
+            var marker = L.marker(place.coords, {icon: customIcon}).addTo(map);
+            marker.bindPopup(popupContent, {
+                closeButton: false,
+                offset: L.point(0, -5),
+                autoPan: false
+            });
+
+            // Б) Логика наведения (Hover)
+            marker.on('mouseover', function (e) {
+                this.openPopup();
+            });
+
+            marker.on('mouseout', function (e) {
+                this.closePopup();
+            });
+            
+            // В) Создание карточки внизу страницы
+            const card = document.createElement('div');
+            card.className = 'place-card';
+            
+            // Здесь используем тег IMG для более надежной загрузки
+            card.innerHTML = `
+                <div class="place-image-wrapper">
+                    <img src="${place.imgUrl}" class="place-image-img" alt="${place.name}" onerror="this.src='${fallbackImage}'">
+                </div>
+                <div class="place-content">
+                    <span class="place-city">${place.city}</span>
+                    <h3 class="place-title">${place.name}</h3>
+                    <p class="place-text">${place.fullDesc}</p>
+                </div>
+            `;
+            placesContainer.appendChild(card);
+        });
+
+    </script>
+</body>
+</html>
